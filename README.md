@@ -24,36 +24,23 @@ This repository contains a bash script to install Docker, Portainer, PiVPN, PiHo
 Here are the links and default credentials for accessing each service:
 
 Portainer
-
 URL: http://your-server-ip:9000
-
 Default Credentials: Set during first login
 
 PiVPN
-
 URL: No specific URL. Access using VPN client after configuration.
-
 Default Credentials: None (set up during installation)
 
 Pi-hole
-
 URL: http://your-server-ip/admin
-
 Default Password: Set during installation (usually displayed at the end)
 
 Nginx Proxy Manager
-
 URL: http://your-server-ip:81
-
 Default Credentials:
-
 Username: admin@example.com
-
 Password: changeme
 
 Checkmk
-
 URL: http://your-server-ip:5000
-
 Default Credentials: Set during first setup
-
