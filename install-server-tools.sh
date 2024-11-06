@@ -19,11 +19,11 @@ sudo chmod +x /usr/local/bin/docker-compose
 sudo docker volume create portainer_data
 sudo docker run -d -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce
 
-# Install PiVPN
-curl -L https://install.pivpn.io | bash
-
 # Install Pi-hole
 curl -sSL https://install.pi-hole.net | bash
+
+# Install PiVPN
+curl -L https://install.pivpn.io | bash
 
 # Install Nginx Proxy Manager
 sudo docker run -d -p 80:80 -p 81:81 -p 443:443 --name=nginx-proxy-manager --restart=always -v npm_data:/data -v npm_letsencrypt:/etc/letsencrypt jc21/nginx-proxy-manager:latest
