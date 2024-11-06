@@ -9,7 +9,7 @@ This repository contains a bash script to install Docker, Portainer, PiVPN, PiHo
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/ubuntu-server-setup.git
+   git clone https://github.com/RylanQ/ubuntu-server-setup.git
    cd ubuntu-server-setup
 2. Run the installation script:
    ```bash
