@@ -1,44 +1,34 @@
 #!/bin/bash
 
-# Update the system
-echo "Updating the system..."
+# Update and Set Timezone
 sudo apt update && sudo apt upgrade -y
+sudo timedatectl set-timezone Asia/Kolkata
 
 # Install Docker
-echo "Installing Docker..."
 sudo apt install -y apt-transport-https ca-certificates curl software-properties-common
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 sudo apt update
-sudo apt install -y docker-ce docker-ce-cli containerd.io
-sudo usermod -aG docker ${USER}
+sudo apt install -y docker-ce
 
 # Install Docker Compose
-echo "Installing Docker Compose..."
-sudo apt install -y docker-compose-plugin
+sudo curl -L "https://github.com/docker/compose/releases/download/$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep -Po '"tag_name": "\K.*?(?=")')/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
 
 # Install Portainer
-echo "Setting up Portainer..."
-docker volume create portainer_data
-docker run -d -p 8000:8000 -p 9443:9443 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest
+sudo docker volume create portainer_data
+sudo docker run -d -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce
 
-# Install PiVPN (OpenVPN or WireGuard)
-echo "Installing PiVPN..."
+# Install PiVPN
 curl -L https://install.pivpn.io | bash
 
-# Install PiHole
-echo "Setting up PiHole..."
-docker run -d --name pihole -e TZ="America/New_York" -e WEBPASSWORD="password" -v pihole_config:/etc/pihole -v dnsmasq_config:/etc/dnsmasq.d -p 80:80 -p 53:53/tcp -p 53:53/udp --restart=unless-stopped pihole/pihole:latest
+# Install Pi-hole
+curl -sSL https://install.pi-hole.net | bash
 
 # Install Nginx Proxy Manager
-echo "Installing Nginx Proxy Manager..."
-docker volume create npm_data
-docker volume create npm_letsencrypt
-docker run -d -p 80:80 -p 81:81 -p 443:443 --name=nginx-proxy-manager --restart=always -v npm_data:/data -v npm_letsencrypt:/etc/letsencrypt jc21/nginx-proxy-manager:latest
+sudo docker run -d -p 80:80 -p 81:81 -p 443:443 --name=nginx-proxy-manager --restart=always -v npm_data:/data -v npm_letsencrypt:/etc/letsencrypt jc21/nginx-proxy-manager:latest
 
-# Install Checkmk (Free Edition)
-echo "Installing Checkmk..."
-docker run -d --name checkmk -p 5000:5000 -p 8000:8000 checkmk/check-mk-raw:2.1.0-latest
+# Install Checkmk
+sudo docker run -d -p 5000:5000 --name checkmk --restart always -v checkmk_data:/omd/sites checkmk/check-mk-raw:latest
 
-echo "Installation completed. Please reboot to apply all changes."
-
+echo "All services have been installed successfully!"
