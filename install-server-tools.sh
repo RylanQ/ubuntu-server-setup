@@ -39,7 +39,7 @@ docker run -d --name pihole -e TZ="UTC" -e WEBPASSWORD="$PIHOLE_PASSWORD" -p 53:
 
 # Set up PiVPN
 echo "Setting up PiVPN..."
-curl -L https://install.pivpn.io | bash -s -- --unattended
+curl -L https://install.pivpn.io | bash
 
 # Set up Nginx Proxy Manager
 echo "Setting up Nginx Proxy Manager..."
