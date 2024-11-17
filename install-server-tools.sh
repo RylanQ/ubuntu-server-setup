@@ -84,7 +84,11 @@ EOL
 
 # Download and update root hints for Unbound
 curl -o /var/lib/unbound/root.hints https://www.internic.net/domain/named.root
-chown unbound:unbound /var/lib/unbound/root.hints
+
+# Fix permissions for Unbound
+echo "Fixing permissions for Unbound directories..."
+sudo chown -R unbound:unbound /etc/unbound
+sudo chown -R unbound:unbound /var/lib/unbound
 
 # Restart Unbound to apply changes
 sudo systemctl restart unbound
