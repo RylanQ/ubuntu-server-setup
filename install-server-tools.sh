@@ -89,9 +89,12 @@ curl -o /var/lib/unbound/root.hints https://www.internic.net/domain/named.root
 echo "Fixing permissions for Unbound directories..."
 sudo chown -R unbound:unbound /etc/unbound
 sudo chown -R unbound:unbound /var/lib/unbound
+sudo chmod -R 755 /etc/unbound
+sudo chmod -R 755 /var/lib/unbound
 
 # Restart Unbound to apply changes
-sudo systemctl restart unbound
+echo "Restarting Unbound service..."
+sudo systemctl restart unbound || { echo "Unbound failed to start. Check configuration and permissions."; exit 1; }
 sudo systemctl enable unbound
 
 # Configure Pi-hole to use Unbound
