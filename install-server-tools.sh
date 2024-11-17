@@ -51,10 +51,12 @@ sudo sed -i 's/server.port *= *80/server.port = 8080/' /etc/lighttpd/lighttpd.co
 sudo sed -i 's|#server.bind.*|server.bind = "0.0.0.0"|' /etc/lighttpd/lighttpd.conf
 sudo systemctl restart lighttpd || { echo "Failed to restart lighttpd"; exit 1; }
 
-# Ensure firewall rules allow access
-echo "Configuring firewall rules for Pi-hole and alternative ports..."
-sudo ufw allow 8080/tcp
-sudo ufw allow 8181/tcp
+# Ensure firewall rules allow access for web and DNS
+echo "Configuring firewall rules for Pi-hole and DNS ports..."
+sudo ufw allow 8080/tcp    # Web interface for Pi-hole
+sudo ufw allow 8181/tcp    # Alternative web port
+sudo ufw allow 53/tcp      # DNS traffic (TCP)
+sudo ufw allow 53/udp      # DNS traffic (UDP)
 sudo ufw reload || { echo "Failed to reload firewall rules"; exit 1; }
 
 # Set up PiVPN
