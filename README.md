@@ -77,12 +77,12 @@ Below are the URLs and credentials for accessing the installed services:
 ## Notes
 
 1. **Firewall Configuration**:
-   - The script configures the firewall (`ufw`) to allow necessary ports:
-     - **DNS**: 53 (TCP/UDP)
+   - The script configures the firewall (`ufw`) to allow necessary ports for installed services only:
      - **Pi-hole Web Interface**: 8080 (TCP)
      - **Portainer**: 9444 (TCP)
-     - **Nginx Proxy Manager**: 80, 81, 443 (TCP)
+     - **Nginx Proxy Manager**: 80 (HTTP), 81 (Admin), 443 (HTTPS) (TCP)
      - **Checkmk**: 5001 (TCP)
+   - External DNS (port 53) access is blocked for security, as Pi-hole handles internal DNS.
    - Ensure these ports are not blocked by external firewalls.
 
 2. **Security**:
@@ -93,7 +93,6 @@ Below are the URLs and credentials for accessing the installed services:
    - Ensure that the following ports are not in use before running the script:
      - **Portainer**: 9444
      - **Pi-hole Web Interface**: 8080
-     - **DNS**: 53
      - **Nginx Proxy Manager**: 80, 81, 443
      - **Checkmk**: 5001
 
