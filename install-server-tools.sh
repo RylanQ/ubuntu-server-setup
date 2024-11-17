@@ -51,6 +51,12 @@ sudo sed -i 's/server.port *= *80/server.port = 8080/' /etc/lighttpd/lighttpd.co
 sudo sed -i 's|#server.bind.*|server.bind = "0.0.0.0"|' /etc/lighttpd/lighttpd.conf
 sudo systemctl restart lighttpd || { echo "Failed to restart lighttpd"; exit 1; }
 
+# Ensure firewall rules allow access
+echo "Configuring firewall rules for Pi-hole and alternative ports..."
+sudo ufw allow 8080/tcp
+sudo ufw allow 8181/tcp
+sudo ufw reload || { echo "Failed to reload firewall rules"; exit 1; }
+
 # Set up PiVPN
 echo "Setting up PiVPN..."
 curl -L https://install.pivpn.io -o install-pivpn.sh
