@@ -39,15 +39,11 @@ docker run -d -p 9443:9443 --name=portainer --restart=always -v /var/run/docker.
     echo "Portainer setup failed"; exit 1;
 }
 
-# Set up Pi-hole
+# Set up Pi-hole (Native Installation)
 echo "Setting up Pi-hole..."
-PIHOLE_PASSWORD=$(openssl rand -base64 32)
-echo "Generated Pi-hole Web Interface Password."
-docker volume create pihole_data
-docker volume create dnsmasq_data
-docker run -d --name pihole -e TZ="UTC" -e WEBPASSWORD="$PIHOLE_PASSWORD" -p 53:53/tcp -p 53:53/udp -p 80:80 -p 443:443 --dns=127.0.0.1 --dns=8.8.8.8 -v pihole_data:/etc/pihole -v dnsmasq_data:/etc/dnsmasq.d --restart=unless-stopped pihole/pihole:latest || {
-    echo "Pi-hole setup failed"; exit 1;
-}
+curl -sSL https://install.pi-hole.net -o install-pihole.sh
+chmod +x install-pihole.sh
+sudo ./install-pihole.sh || { echo "Pi-hole setup failed"; exit 1; }
 
 # Set up PiVPN
 echo "Setting up PiVPN..."
@@ -72,16 +68,16 @@ docker run -d --name checkmk -p 5000:5000 --restart always -e CMK_PASSWORD=$CHEC
     echo "Checkmk setup failed"; exit 1;
 }
 
-# Save passwords securely
+# Save credentials securely
 echo "Saving passwords to /root/setup-info.txt"
-echo "Pi-hole Web Interface Password: $PIHOLE_PASSWORD" > /root/setup-info.txt
-echo "Checkmk Admin Password: $CHECKMK_PASSWORD" >> /root/setup-info.txt
+echo "Checkmk Admin Password: $CHECKMK_PASSWORD" > /root/setup-info.txt
 chmod 600 /root/setup-info.txt
 
 # Display setup information
-echo "Installations complete. Applications have been set up as Docker containers:"
+echo "Installations complete. Applications have been set up:"
 echo "- Portainer is available on https://<your-server-ip>:9443"
 echo "- Pi-hole is available on http://<your-server-ip>/admin"
 echo "- Nginx Proxy Manager is available on http://<your-server-ip>:81"
 echo "- Checkmk is available on http://<your-server-ip>:5000"
-echo "Passwords have been securely saved to /root/setup-info.txt"
+echo "Credentials for Pi-hole are set during installation."
+echo "Other generated credentials are securely saved to /root/setup-info.txt"
