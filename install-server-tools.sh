@@ -35,7 +35,7 @@ chmod +x /usr/local/bin/docker-compose
 # Set up Portainer
 echo "Setting up Portainer..."
 docker volume create portainer_data
-docker run -d -p 9443:9443 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest || {
+docker run -d -p 9444:9443 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest || {
     echo "Portainer setup failed"; exit 1;
 }
 
@@ -64,7 +64,7 @@ echo "Setting up Checkmk..."
 CHECKMK_PASSWORD=$(openssl rand -base64 32)
 echo "Generated Checkmk Admin Password."
 docker volume create checkmk_data
-docker run -d --name checkmk -p 5000:5000 --restart always -e CMK_PASSWORD=$CHECKMK_PASSWORD -v checkmk_data:/omd/sites checkmk/check-mk-raw:latest || {
+docker run -d --name checkmk -p 5001:5000 --restart always -e CMK_PASSWORD=$CHECKMK_PASSWORD -v checkmk_data:/omd/sites checkmk/check-mk-raw:latest || {
     echo "Checkmk setup failed"; exit 1;
 }
 
@@ -75,9 +75,9 @@ chmod 600 /root/setup-info.txt
 
 # Display setup information
 echo "Installations complete. Applications have been set up:"
-echo "- Portainer is available on https://<your-server-ip>:9443"
+echo "- Portainer is available on https://<your-server-ip>:9444"
 echo "- Pi-hole is available on http://<your-server-ip>/admin"
 echo "- Nginx Proxy Manager is available on http://<your-server-ip>:81"
-echo "- Checkmk is available on http://<your-server-ip>:5000"
+echo "- Checkmk is available on http://<your-server-ip>:5001"
 echo "Credentials for Pi-hole are set during installation."
 echo "Other generated credentials are securely saved to /root/setup-info.txt"
