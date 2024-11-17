@@ -1,57 +1,82 @@
 #!/bin/bash
 
+# Exit on error
+set -e  
+
+# Log output to a file
+exec > >(tee -i /var/log/setup.log) 2>&1
+
 # Set timezone to UTC
 echo "Setting timezone to UTC"
-timedatectl set-timezone UTC
+timedatectl set-timezone UTC || { echo "Failed to set timezone"; exit 1; }
 
 # Update system and install dependencies
 echo "Updating system packages and installing dependencies..."
 apt update && apt upgrade -y
-apt install -y curl apt-transport-https ca-certificates software-properties-common gnupg lsb-release
+apt install -y curl apt-transport-https ca-certificates software-properties-common gnupg lsb-release || {
+    echo "Dependency installation failed"; exit 1;
+}
 
 # Install Docker
 echo "Installing Docker..."
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 apt update
-apt install -y docker-ce docker-ce-cli containerd.io
+apt install -y docker-ce docker-ce-cli containerd.io || { echo "Docker installation failed"; exit 1; }
 systemctl enable docker
 systemctl start docker
 
 # Install Docker Compose
 echo "Installing Docker Compose..."
-DOCKER_COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep tag_name | cut -d '"' -f 4)
+DOCKER_COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep tag_name | cut -d '"' -f 4 || echo "v2.20.2")
 curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
 # Set up Portainer
 echo "Setting up Portainer..."
 docker volume create portainer_data
-docker run -d -p 9443:9443 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest
+docker run -d -p 9443:9443 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest || {
+    echo "Portainer setup failed"; exit 1;
+}
 
 # Set up Pi-hole
 echo "Setting up Pi-hole..."
 PIHOLE_PASSWORD=$(openssl rand -base64 32)
-echo "Pi-hole Web Interface Password: $PIHOLE_PASSWORD"
+echo "Generated Pi-hole Web Interface Password."
 docker volume create pihole_data
 docker volume create dnsmasq_data
-docker run -d --name pihole -e TZ="UTC" -e WEBPASSWORD="$PIHOLE_PASSWORD" -p 53:53/tcp -p 53:53/udp -p 80:80 -p 443:443 --dns=127.0.0.1 --dns=8.8.8.8 -v pihole_data:/etc/pihole -v dnsmasq_data:/etc/dnsmasq.d --restart=unless-stopped pihole/pihole:latest
+docker run -d --name pihole -e TZ="UTC" -e WEBPASSWORD="$PIHOLE_PASSWORD" -p 53:53/tcp -p 53:53/udp -p 80:80 -p 443:443 --dns=127.0.0.1 --dns=8.8.8.8 -v pihole_data:/etc/pihole -v dnsmasq_data:/etc/dnsmasq.d --restart=unless-stopped pihole/pihole:latest || {
+    echo "Pi-hole setup failed"; exit 1;
+}
 
 # Set up PiVPN
 echo "Setting up PiVPN..."
-curl -L https://install.pivpn.io | bash
+curl -L https://install.pivpn.io -o install-pivpn.sh
+chmod +x install-pivpn.sh
+bash install-pivpn.sh || { echo "PiVPN setup failed"; exit 1; }
 
 # Set up Nginx Proxy Manager
 echo "Setting up Nginx Proxy Manager..."
 docker volume create npm_data
 docker volume create npm_letsencrypt
-docker run -d -p 80:80 -p 81:81 -p 443:443 --name nginxproxymanager --restart=always -v npm_data:/data -v npm_letsencrypt:/etc/letsencrypt jc21/nginx-proxy-manager:latest
+docker run -d -p 80:80 -p 81:81 -p 443:443 --name nginxproxymanager --restart=always -v npm_data:/data -v npm_letsencrypt:/etc/letsencrypt jc21/nginx-proxy-manager:latest || {
+    echo "Nginx Proxy Manager setup failed"; exit 1;
+}
 
 # Set up Checkmk
 echo "Setting up Checkmk..."
 CHECKMK_PASSWORD=$(openssl rand -base64 32)
+echo "Generated Checkmk Admin Password."
 docker volume create checkmk_data
-docker run -d --name checkmk -p 5000:5000 --restart always -e CMK_PASSWORD=$CHECKMK_PASSWORD -v checkmk_data:/omd/sites checkmk/check-mk-raw:latest
+docker run -d --name checkmk -p 5000:5000 --restart always -e CMK_PASSWORD=$CHECKMK_PASSWORD -v checkmk_data:/omd/sites checkmk/check-mk-raw:latest || {
+    echo "Checkmk setup failed"; exit 1;
+}
+
+# Save passwords securely
+echo "Saving passwords to /root/setup-info.txt"
+echo "Pi-hole Web Interface Password: $PIHOLE_PASSWORD" > /root/setup-info.txt
+echo "Checkmk Admin Password: $CHECKMK_PASSWORD" >> /root/setup-info.txt
+chmod 600 /root/setup-info.txt
 
 # Display setup information
 echo "Installations complete. Applications have been set up as Docker containers:"
@@ -59,7 +84,4 @@ echo "- Portainer is available on https://<your-server-ip>:9443"
 echo "- Pi-hole is available on http://<your-server-ip>/admin"
 echo "- Nginx Proxy Manager is available on http://<your-server-ip>:81"
 echo "- Checkmk is available on http://<your-server-ip>:5000"
-
-echo "Generated Passwords:"
-echo "Pi-hole Web Interface Password: $PIHOLE_PASSWORD"
-echo "Checkmk Admin Password: $CHECKMK_PASSWORD"
+echo "Passwords have been securely saved to /root/setup-info.txt"
