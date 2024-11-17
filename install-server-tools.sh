@@ -45,21 +45,20 @@ curl -sSL https://install.pi-hole.net -o install-pihole.sh
 chmod +x install-pihole.sh
 sudo ./install-pihole.sh || { echo "Pi-hole setup failed"; exit 1; }
 
-# Reset terminal settings to prevent scroll issues
-echo "Resetting terminal settings..."
-reset
-
-# Reconfigure lighttpd to avoid port conflicts with NGINX and allow network access
-echo "Reconfiguring lighttpd for Pi-hole..."
+# Adjust Pi-hole lighttpd configuration
+echo "Configuring Pi-hole's web server to avoid conflicts..."
 sudo sed -i 's/server.port *= *80/server.port = 8080/' /etc/lighttpd/lighttpd.conf
 sudo sed -i 's|#server.bind.*|server.bind = "0.0.0.0"|' /etc/lighttpd/lighttpd.conf
 sudo systemctl restart lighttpd || { echo "Failed to restart lighttpd"; exit 1; }
 
-# Ensure firewall rules allow access for web and DNS
-echo "Configuring firewall rules for Pi-hole and DNS..."
-sudo ufw allow 8080/tcp    # Web interface for Pi-hole
-sudo ufw allow 53/tcp      # DNS traffic (TCP)
-sudo ufw allow 53/udp      # DNS traffic (UDP)
+# Configure necessary firewall rules
+echo "Configuring firewall rules..."
+sudo ufw allow 8080/tcp comment "Pi-hole web interface"
+sudo ufw allow 9444/tcp comment "Portainer web interface"
+sudo ufw allow 80/tcp comment "Nginx Proxy Manager HTTP"
+sudo ufw allow 81/tcp comment "Nginx Proxy Manager Admin"
+sudo ufw allow 443/tcp comment "Nginx Proxy Manager HTTPS"
+sudo ufw allow 5001/tcp comment "Checkmk web interface"
 sudo ufw reload || { echo "Failed to reload firewall rules"; exit 1; }
 
 # Set up PiVPN
@@ -94,5 +93,4 @@ echo "- Portainer is available on https://<your-server-ip>:9444"
 echo "- Pi-hole is available on http://<your-server-ip>:8080/admin"
 echo "- Nginx Proxy Manager is available on http://<your-server-ip>:81"
 echo "- Checkmk is available on http://<your-server-ip>:5001"
-echo "Credentials for Pi-hole are set during installation."
-echo "Other generated credentials are securely saved to /root/setup-info.txt"
+echo "Generated credentials are securely saved to /root/setup-info.txt"
