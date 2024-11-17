@@ -45,9 +45,10 @@ curl -sSL https://install.pi-hole.net -o install-pihole.sh
 chmod +x install-pihole.sh
 sudo ./install-pihole.sh || { echo "Pi-hole setup failed"; exit 1; }
 
-# Reconfigure lighttpd to avoid port conflicts with NGINX
+# Reconfigure lighttpd to avoid port conflicts with NGINX and allow network access
 echo "Reconfiguring lighttpd for Pi-hole..."
 sudo sed -i 's/server.port *= *80/server.port = 8080/' /etc/lighttpd/lighttpd.conf
+sudo sed -i 's|#server.bind.*|server.bind = "0.0.0.0"|' /etc/lighttpd/lighttpd.conf
 sudo systemctl restart lighttpd || { echo "Failed to restart lighttpd"; exit 1; }
 
 # Set up PiVPN
