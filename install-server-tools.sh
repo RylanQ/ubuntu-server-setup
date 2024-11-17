@@ -45,6 +45,11 @@ curl -sSL https://install.pi-hole.net -o install-pihole.sh
 chmod +x install-pihole.sh
 sudo ./install-pihole.sh || { echo "Pi-hole setup failed"; exit 1; }
 
+# Reconfigure lighttpd to avoid port conflicts with NGINX
+echo "Reconfiguring lighttpd for Pi-hole..."
+sudo sed -i 's/server.port *= *80/server.port = 8080/' /etc/lighttpd/lighttpd.conf
+sudo systemctl restart lighttpd || { echo "Failed to restart lighttpd"; exit 1; }
+
 # Set up PiVPN
 echo "Setting up PiVPN..."
 curl -L https://install.pivpn.io -o install-pivpn.sh
@@ -76,7 +81,7 @@ chmod 600 /root/setup-info.txt
 # Display setup information
 echo "Installations complete. Applications have been set up:"
 echo "- Portainer is available on https://<your-server-ip>:9444"
-echo "- Pi-hole is available on http://<your-server-ip>/admin"
+echo "- Pi-hole is available on http://<your-server-ip>:8080/admin"
 echo "- Nginx Proxy Manager is available on http://<your-server-ip>:81"
 echo "- Checkmk is available on http://<your-server-ip>:5001"
 echo "Credentials for Pi-hole are set during installation."
