@@ -55,56 +55,9 @@ sudo sed -i 's/server.port *= *80/server.port = 8080/' /etc/lighttpd/lighttpd.co
 sudo sed -i 's|#server.bind.*|server.bind = "0.0.0.0"|' /etc/lighttpd/lighttpd.conf
 sudo systemctl restart lighttpd || { echo "Failed to restart lighttpd"; exit 1; }
 
-# Install Unbound for Pi-hole
-echo "Installing Unbound DNS resolver..."
-apt install -y unbound || { echo "Unbound installation failed"; exit 1; }
-
-# Fix permissions for Unbound
-echo "Fixing permissions for Unbound directories..."
-sudo chown -R unbound:unbound /etc/unbound
-sudo chown -R unbound:unbound /var/lib/unbound
-sudo chmod -R 755 /etc/unbound
-sudo chmod -R 755 /var/lib/unbound
-
-# Restart Unbound to apply changes
-echo "Restarting Unbound service to ensure functionality..."
-sudo systemctl restart unbound || { echo "Unbound failed to start. Check configuration and permissions."; exit 1; }
-sudo systemctl enable unbound
-
-# Configure Unbound with Pi-hole
-echo "Configuring Unbound with Pi-hole..."
-cat <<EOL | sudo tee /etc/unbound/unbound.conf.d/pi-hole.conf
-server:
-    verbosity: 0
-    interface: 127.0.0.1
-    port: 5335
-    do-ip4: yes
-    do-udp: yes
-    do-tcp: yes
-    root-hints: "/var/lib/unbound/root.hints"
-    harden-dnssec-stripped: yes
-    use-caps-for-id: yes
-    edns-buffer-size: 1232
-    prefetch: yes
-    prefetch-key: yes
-    cache-min-ttl: 3600
-    cache-max-ttl: 86400
-    private-address: 192.168.0.0/16
-    private-address: 172.16.0.0/12
-    private-address: 10.0.0.0/8
-EOL
-
-# Download and update root hints for Unbound
-curl -o /var/lib/unbound/root.hints https://www.internic.net/domain/named.root
-
-# Configure Pi-hole to use Unbound
-echo "Configuring Pi-hole to use Unbound as DNS resolver..."
-sudo pihole -a setdns 127.0.0.1#5335 || { echo "Failed to configure Pi-hole to use Unbound"; exit 1; }
-
 # Ensure firewall rules allow access for web and DNS
-echo "Configuring firewall rules for Pi-hole, DNS, and Unbound..."
+echo "Configuring firewall rules for Pi-hole and DNS..."
 sudo ufw allow 8080/tcp    # Web interface for Pi-hole
-sudo ufw allow 8181/tcp    # Alternative web port
 sudo ufw allow 53/tcp      # DNS traffic (TCP)
 sudo ufw allow 53/udp      # DNS traffic (UDP)
 sudo ufw reload || { echo "Failed to reload firewall rules"; exit 1; }
