@@ -59,6 +59,13 @@ sudo systemctl restart lighttpd || { echo "Failed to restart lighttpd"; exit 1; 
 echo "Installing Unbound DNS resolver..."
 apt install -y unbound || { echo "Unbound installation failed"; exit 1; }
 
+# Fix permissions for Unbound
+echo "Fixing permissions for Unbound directories..."
+sudo chown -R unbound:unbound /etc/unbound
+sudo chown -R unbound:unbound /var/lib/unbound
+sudo chmod -R 755 /etc/unbound
+sudo chmod -R 755 /var/lib/unbound
+
 # Configure Unbound with Pi-hole
 echo "Configuring Unbound with Pi-hole..."
 cat <<EOL | sudo tee /etc/unbound/unbound.conf.d/pi-hole.conf
@@ -85,15 +92,8 @@ EOL
 # Download and update root hints for Unbound
 curl -o /var/lib/unbound/root.hints https://www.internic.net/domain/named.root
 
-# Fix permissions for Unbound
-echo "Fixing permissions for Unbound directories..."
-sudo chown -R unbound:unbound /etc/unbound
-sudo chown -R unbound:unbound /var/lib/unbound
-sudo chmod -R 755 /etc/unbound
-sudo chmod -R 755 /var/lib/unbound
-
 # Restart Unbound to apply changes
-echo "Restarting Unbound service..."
+echo "Restarting Unbound service to ensure functionality..."
 sudo systemctl restart unbound || { echo "Unbound failed to start. Check configuration and permissions."; exit 1; }
 sudo systemctl enable unbound
 
@@ -120,8 +120,7 @@ echo "Setting up Nginx Proxy Manager..."
 docker volume create npm_data
 docker volume create npm_letsencrypt
 docker run -d -p 80:80 -p 81:81 -p 443:443 --name nginxproxymanager --restart=always -v npm_data:/data -v npm_letsencrypt:/etc/letsencrypt jc21/nginx-proxy-manager:latest || {
-    echo "Nginx Proxy Manager setup failed"; exit 1;
-}
+    echo "Nginx Proxy Manager setup failed"; exit 1; }
 
 # Set up Checkmk
 echo "Setting up Checkmk..."
@@ -129,8 +128,7 @@ CHECKMK_PASSWORD=$(openssl rand -base64 32)
 echo "Generated Checkmk Admin Password."
 docker volume create checkmk_data
 docker run -d --name checkmk -p 5001:5000 --restart always -e CMK_PASSWORD=$CHECKMK_PASSWORD -v checkmk_data:/omd/sites checkmk/check-mk-raw:latest || {
-    echo "Checkmk setup failed"; exit 1;
-}
+    echo "Checkmk setup failed"; exit 1; }
 
 # Save credentials securely
 echo "Saving passwords to /root/setup-info.txt"
