@@ -66,6 +66,11 @@ sudo chown -R unbound:unbound /var/lib/unbound
 sudo chmod -R 755 /etc/unbound
 sudo chmod -R 755 /var/lib/unbound
 
+# Restart Unbound to apply changes
+echo "Restarting Unbound service to ensure functionality..."
+sudo systemctl restart unbound || { echo "Unbound failed to start. Check configuration and permissions."; exit 1; }
+sudo systemctl enable unbound
+
 # Configure Unbound with Pi-hole
 echo "Configuring Unbound with Pi-hole..."
 cat <<EOL | sudo tee /etc/unbound/unbound.conf.d/pi-hole.conf
@@ -91,11 +96,6 @@ EOL
 
 # Download and update root hints for Unbound
 curl -o /var/lib/unbound/root.hints https://www.internic.net/domain/named.root
-
-# Restart Unbound to apply changes
-echo "Restarting Unbound service to ensure functionality..."
-sudo systemctl restart unbound || { echo "Unbound failed to start. Check configuration and permissions."; exit 1; }
-sudo systemctl enable unbound
 
 # Configure Pi-hole to use Unbound
 echo "Configuring Pi-hole to use Unbound as DNS resolver..."
