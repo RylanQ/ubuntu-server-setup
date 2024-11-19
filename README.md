@@ -6,6 +6,7 @@ This repository contains a bash script to set up Docker, Portainer, PiVPN, Pi-ho
 
 - Ubuntu 24.04 LTS (clean install recommended)
 - Internet access during setup
+- A cloud firewall or external firewall configuration for managing ports and access
 
 ## Usage
 
@@ -72,25 +73,25 @@ Below are the URLs and credentials for accessing the installed services:
 ## Logging and Troubleshooting
 
 - All script logs are saved to `/var/log/setup.log`. Review this log if you encounter any issues.
-- Ensure no other services are using the default ports for each application before running the script.
+- Ensure that the cloud firewall is configured to allow access to the necessary ports for each service.
 
 ## Notes
 
-1. **Firewall Configuration**:
-   - The script configures the firewall (`ufw`) to allow necessary ports for installed services only:
+1. **Cloud Firewall Configuration**:
+   - The script assumes that port management is handled by an external or cloud-based firewall. Ensure the following ports are open as needed:
      - **Pi-hole Web Interface**: 8080 (TCP)
      - **Portainer**: 9444 (TCP)
      - **Nginx Proxy Manager**: 80 (HTTP), 81 (Admin), 443 (HTTPS) (TCP)
      - **Checkmk**: 5001 (TCP)
-   - External DNS (port 53) access is blocked for security, as Pi-hole handles internal DNS.
-   - Ensure these ports are not blocked by external firewalls.
+     - **PiVPN**: Custom VPN port (set during installation)
+   - External DNS (port 53) is not explicitly managed by this script.
 
 2. **Security**:
    - Generated passwords are saved securely. Modify the password storage method if you have custom security requirements.
    - Change the default credentials for Nginx Proxy Manager after the first login.
 
 3. **Port Conflicts**:
-   - Ensure that the following ports are not in use before running the script:
+   - Ensure the following ports are not in use before running the script:
      - **Portainer**: 9444
      - **Pi-hole Web Interface**: 8080
      - **Nginx Proxy Manager**: 80, 81, 443
